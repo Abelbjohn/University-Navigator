@@ -109,19 +109,20 @@ body {
   pointer-events: none;
 }
 
-/* Main Search Box Card */
+/* Main Search Box Card - Sleek Capsule Design */
 .gmaps-search-card {
   pointer-events: auto;
   background: var(--mono-glass);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--mono-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full);
   box-shadow: var(--mono-shadow-lg);
-  padding: 8px 12px;
+  padding: 4px 10px;
+  height: 38px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
@@ -131,18 +132,18 @@ body {
 }
 
 .brand-pin-icon {
-  width: 34px;
-  height: 34px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: var(--mono-white);
   color: var(--mono-black);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.95rem;
+  font-size: 0.76rem;
   font-weight: 800;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
 .gmaps-search-input {
@@ -150,7 +151,7 @@ body {
   background: transparent;
   border: none;
   color: var(--mono-white);
-  font-size: 0.92rem;
+  font-size: 0.82rem;
   font-weight: 500;
   outline: none;
   font-family: inherit;
@@ -163,12 +164,12 @@ body {
 .gmaps-search-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 
 .btn-search-action {
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: transparent;
   border: none;
@@ -177,7 +178,7 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 0.88rem;
+  font-size: 0.76rem;
   transition: all var(--transition-fast);
 }
 
@@ -236,6 +237,143 @@ body {
 .pill-add-btn:hover {
   background: var(--mono-white);
   color: var(--mono-black);
+}
+
+.pill-install-btn {
+  background: #ffffff;
+  color: #000000;
+  font-weight: 700;
+  border-color: #ffffff;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+  animation: installPulse 3s infinite ease-in-out;
+}
+
+@keyframes installPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+.pill-my-loc {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #93c5fd;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.pill-my-loc:hover {
+  background: rgba(59, 130, 246, 0.3);
+  border-color: #60a5fa;
+  color: #ffffff;
+}
+.pill-my-loc i {
+  color: #60a5fa;
+  animation: gpsCrosshairPulse 2.5s infinite ease-in-out;
+}
+@keyframes gpsCrosshairPulse {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.25); opacity: 1; }
+}
+
+.btn-gps-detect {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 14px;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: var(--radius-sm);
+  color: #ffffff;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-bottom: 12px;
+}
+.btn-gps-detect:hover {
+  background: rgba(59, 130, 246, 0.22);
+  border-color: #60a5fa;
+  transform: translateY(-1px);
+}
+.btn-gps-detect i {
+  font-size: 1.2rem;
+  color: #60a5fa;
+}
+
+.loc-chips-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.loc-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: var(--mono-800);
+  border: 1px solid var(--mono-border);
+  border-radius: var(--radius-full);
+  color: var(--mono-200);
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.loc-chip-btn:hover {
+  background: var(--mono-700);
+  color: #ffffff;
+  border-color: var(--mono-white);
+}
+.loc-chip-btn.active {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #60a5fa;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+}
+
+.loc-item-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  background: var(--mono-850);
+  border: 1px solid var(--mono-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.loc-item-card:hover {
+  background: var(--mono-800);
+  border-color: var(--mono-border-strong);
+  transform: translateX(2px);
+}
+.loc-item-card.active {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.12);
+}
+.loc-item-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--mono-100);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.loc-item-desc {
+  font-size: 0.69rem;
+  color: var(--mono-400);
+  margin-top: 2px;
+}
+
+@keyframes gps-radar-pulse {
+  0% { r: 6px; opacity: 0.95; }
+  100% { r: 24px; opacity: 0; }
+}
+.svg-gps-pulse {
+  fill: rgba(59, 130, 246, 0.35);
+  stroke: #3b82f6;
+  stroke-width: 1.5;
+  animation: gps-radar-pulse 2s infinite ease-out;
 }
 
 /* Header Add Action Button */
@@ -2013,38 +2151,44 @@ body {
     overflow: hidden;
   }
 
-  /* Compact Floating Search Hub pinned to top */
+  /* Ultra-Compact Floating Search Hub pinned to top */
   .gmaps-floating-search-hub {
-    top: 8px;
+    top: 6px;
     left: 8px;
     right: 8px;
     width: auto;
     max-width: calc(100vw - 16px);
-    gap: 6px;
+    gap: 5px;
   }
 
   .gmaps-search-card {
-    padding: 6px 10px;
-    height: 42px;
-    border-radius: var(--radius-sm);
-    gap: 8px;
+    padding: 3px 8px;
+    height: 34px;
+    border-radius: var(--radius-full);
+    gap: 6px;
   }
 
   .brand-pin-icon {
-    width: 28px;
-    height: 28px;
-    font-size: 0.8rem;
+    width: 22px;
+    height: 22px;
+    font-size: 0.65rem;
     flex-shrink: 0;
   }
 
   .gmaps-search-input {
-    font-size: 0.82rem;
+    font-size: 0.78rem;
+  }
+
+  .btn-search-action {
+    width: 22px;
+    height: 22px;
+    font-size: 0.72rem;
   }
 
   /* Smooth scrollable pills row without scrollbars */
   .gmaps-category-pills-row {
-    padding: 2px 0 4px 0;
-    gap: 6px;
+    padding: 1px 0 3px 0;
+    gap: 5px;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
@@ -2054,9 +2198,9 @@ body {
   }
 
   .cat-pill-btn {
-    padding: 6px 11px;
-    font-size: 0.72rem;
-    gap: 5px;
+    padding: 5px 10px;
+    font-size: 0.68rem;
+    gap: 4px;
     flex-shrink: 0;
   }
 

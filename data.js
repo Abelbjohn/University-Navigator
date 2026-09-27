@@ -101,15 +101,15 @@ export const SRM_KTR_DATA = {
     },
     {
       id: "bldg-tp",
-      name: "Tech Park (TP)",
-      shortName: "Tech Park Tower",
-      code: "TP",
+      name: "Tech Park 1 (TP-1)",
+      shortName: "Tech Park Tower 1",
+      code: "TP1",
       zone: "Tech Park Zone",
       road: "Sir C.V. Raman Road",
       floorsCount: 15,
-      x: 620,
+      x: 595,
       y: 165,
-      width: 120,
+      width: 95,
       height: 105,
       floors: [
         { level: 0, name: "Ground Floor", code: "G", desc: "Main Lobby, Tech Park Food Court, ATM, Turnstiles" },
@@ -127,6 +127,30 @@ export const SRM_KTR_DATA = {
       photo: "assets/prof_male.jpg"
     },
     {
+      id: "bldg-tp2",
+      name: "Tech Park 2 (TP-2)",
+      shortName: "Tech Park Tower 2",
+      code: "TP2",
+      zone: "Tech Park Zone",
+      road: "Sir C.V. Raman Road / Auditorium Plaza",
+      floorsCount: 12,
+      x: 702,
+      y: 165,
+      width: 92,
+      height: 105,
+      floors: [
+        { level: 0, name: "Ground Floor", code: "G", desc: "Grand Atrium, High-Speed Elevators, Innovation Hub & Startup Incubator, Helpdesk" },
+        { level: 1, name: "1st Floor", code: "1F", desc: "Software Engineering Labs, AI Research Collaborative Suites, Cloud Computing Hub" },
+        { level: 2, name: "2nd Floor", code: "2F", desc: "Advanced Cyber Security & IoT Testing Labs" },
+        { level: 3, name: "3rd Floor", code: "3F", desc: "Computing Technologies (CTECH) Annex & Faculty Cabins (TP2-301 to 325)" },
+        { level: 4, name: "4th Floor", code: "4F", desc: "Computational Intelligence (CINTEL) Project Demonstration Labs" },
+        { level: 5, name: "5th Floor", code: "5F", desc: "AI & Big Data Centre of Excellence with Smart Classrooms" }
+      ],
+      description: "Modern high-rise tech complex situated adjacent to TP-1 and between TP-1 and Dr. T.P. Ganesan Auditorium, housing cutting-edge computing labs, AI research suites, and faculty cabins.",
+      category: "Academic & Research",
+      photo: "assets/prof_female.jpg"
+    },
+    {
       id: "bldg-tpg",
       name: "Dr. T. P. Ganesan Auditorium",
       shortName: "TP Ganesan Auditorium",
@@ -134,9 +158,9 @@ export const SRM_KTR_DATA = {
       zone: "Auditorium Zone",
       road: "Mahakavi Bharathiyar Road",
       floorsCount: 3,
-      x: 760,
+      x: 806,
       y: 165,
-      width: 135,
+      width: 130,
       height: 100,
       floors: [
         { level: 0, name: "Ground Level", code: "G", desc: "Registration Foyer, VIP Green Rooms & Media Gallery" },
@@ -697,6 +721,27 @@ export const SRM_KTR_DATA = {
       statusNote: "In Cabin - Analytics consultation",
       photo: null,
       rating: "4.7 ★"
+    },
+    {
+      id: "t-srm-tp2-01",
+      name: "Dr. K. Meenakshi",
+      title: "Associate Professor",
+      dept: "Computing Technologies (CTECH)",
+      deptCode: "CTECH",
+      buildingId: "bldg-tp2",
+      buildingName: "Tech Park 2 (TP-2)",
+      floor: 3,
+      floorLabel: "3rd Floor",
+      roomNumber: "TP2-315",
+      cabinDetails: "CTECH Faculty Suite #315, Tech Park 2 North Wing",
+      email: "meenakshik@srmist.edu.in",
+      phone: "+91 44 2741 7890",
+      officeHours: "Tue, Fri: 10:30 AM - 12:30 PM",
+      subjects: ["Artificial Intelligence", "Cloud Native Microservices", "Full Stack Development"],
+      status: "available",
+      statusNote: "Available in TP2 Cabin 315",
+      photo: "assets/prof_female.jpg",
+      rating: "4.9 ★"
     },
 
     // --- MECHANICAL & AUTOMOBILE ENGINEERING ---
@@ -1285,8 +1330,9 @@ export const SRM_KTR_DATA = {
       { id: "node-bio-entrance", name: "Bio-Engineering Block Entrance", x: 535, y: 190, type: "entrance", buildingId: "bldg-bio", road: "Mahakavi Bharathiyar Road" },
       { id: "node-java-canteen", name: "Java Canteen Plaza", x: 530, y: 350, type: "food", road: "Swami Vivekananda Road" },
       { id: "node-gazebo", name: "Gazebo Food Walkway", x: 490, y: 280, type: "food", road: "Swami Vivekananda Road" },
-      { id: "node-tp-entrance", name: "Tech Park Main Entrance", x: 680, y: 270, type: "entrance", buildingId: "bldg-tp", road: "Sir C.V. Raman Road" },
-      { id: "node-tpg-front", name: "Dr. TP Ganesan Auditorium Plaza", x: 825, y: 265, type: "plaza", buildingId: "bldg-tpg", road: "Mahakavi Bharathiyar Road" },
+      { id: "node-tp-entrance", name: "Tech Park 1 (TP-1) Entrance", x: 650, y: 270, type: "entrance", buildingId: "bldg-tp", road: "Sir C.V. Raman Road" },
+      { id: "node-tp2-entrance", name: "Tech Park 2 (TP-2) Entrance", x: 748, y: 270, type: "entrance", buildingId: "bldg-tp2", road: "Sir C.V. Raman Road / Auditorium Plaza" },
+      { id: "node-tpg-front", name: "Dr. TP Ganesan Auditorium Plaza", x: 840, y: 265, type: "plaza", buildingId: "bldg-tpg", road: "Mahakavi Bharathiyar Road" },
       { id: "node-sports-arena", name: "Sports Arena & Oval Ground Gate", x: 700, y: 80, type: "sports", road: "East Campus Road" },
       { id: "node-hostels-entrance", name: "Campus Hostels Complex Gate", x: 535, y: 480, type: "entrance", buildingId: "bldg-hostels-north", road: "Hostel Road" },
       { id: "node-med-entrance", name: "SRM Hospital Casualty Entrance", x: 750, y: 450, type: "entrance", buildingId: "bldg-med", road: "GST Flank Road" },
@@ -1315,10 +1361,13 @@ export const SRM_KTR_DATA = {
       { from: "node-bel-entrance", to: "node-bio-entrance", dist: 120, desc: "Walk northeast along Sir C.V. Raman Road to Bio-Engineering block" },
       { from: "node-bel-entrance", to: "node-gazebo", dist: 100, desc: "Walk east to Gazebo Food Street" },
       { from: "node-gazebo", to: "node-java-canteen", dist: 80, desc: "Walk south to Java Food Court" },
-      { from: "node-gazebo", to: "node-tp-entrance", dist: 140, desc: "Walk east towards Tech Park Tower portico" },
-      { from: "node-java-canteen", to: "node-tp-entrance", dist: 160, desc: "Walk east along Swami Vivekananda Road towards Tech Park" },
-      { from: "node-tp-entrance", to: "node-tpg-front", dist: 145, desc: "Walk east across Vendhar Square to Dr. TP Ganesan Auditorium" },
+      { from: "node-gazebo", to: "node-tp-entrance", dist: 140, desc: "Walk east towards Tech Park 1 portico" },
+      { from: "node-java-canteen", to: "node-tp-entrance", dist: 150, desc: "Walk east along Swami Vivekananda Road towards Tech Park 1" },
+      { from: "node-java-canteen", to: "node-tp2-entrance", dist: 165, desc: "Walk northeast past Tech Park 1 towards Tech Park 2" },
+      { from: "node-tp-entrance", to: "node-tp2-entrance", dist: 65, desc: "Walk along pedestrian walkway between Tech Park 1 and Tech Park 2" },
+      { from: "node-tp2-entrance", to: "node-tpg-front", dist: 75, desc: "Cross Vendhar Square plaza towards Dr. TP Ganesan Auditorium" },
       { from: "node-tp-entrance", to: "node-sports-arena", dist: 190, desc: "Walk north towards SRM Cricket Oval" },
+      { from: "node-tp2-entrance", to: "node-sports-arena", dist: 185, desc: "Walk north from Tech Park 2 towards SRM Cricket Oval" },
       { from: "node-tpg-front", to: "node-sports-arena", dist: 200, desc: "Walk northwest from Auditorium towards Sports Complex" },
       { from: "node-chola-statue", to: "node-hostels-entrance", dist: 80, desc: "Walk south into student hostels avenue (Paari/Kaari/Oori/M-Block)" },
       { from: "node-java-canteen", to: "node-hostels-entrance", dist: 130, desc: "Walk south from Java towards Hostels Gate" },
@@ -1330,7 +1379,7 @@ export const SRM_KTR_DATA = {
   // Indoor floor guides for SRM KTR high-rises
   indoorNavigation: {
     "bldg-tp": {
-      elevatorName: "Tech Park High-Speed Lift Bank A & B (Floors G-15)",
+      elevatorName: "Tech Park 1 High-Speed Lift Bank A & B (Floors G-15)",
       hasElevator: true,
       floorGuide: {
         0: "Ground Floor: Main security turnstiles, Tech Park cafeteria, CUB ATM, and elevator lobbies A & B.",
@@ -1342,6 +1391,18 @@ export const SRM_KTR_DATA = {
         10: "10th Floor: Data Science & Business Systems (DSBS) Dept (TP-1001) & Big Data Research Labs.",
         11: "11th Floor: Advanced Computing Research Suites & Seminar Carrels.",
         12: "12th Floor: Sir J.C. Bose International Conference Auditorium."
+      }
+    },
+    "bldg-tp2": {
+      elevatorName: "Tech Park 2 High-Speed Passenger Lifts A & B",
+      hasElevator: true,
+      floorGuide: {
+        0: "Ground Floor: Main Atrium, Turnstiles, Reception Desk, Startup Incubator & Student Helpdesk.",
+        1: "1st Floor: Software Engineering & Cloud Computing Labs (TP2-101 to 120).",
+        2: "2nd Floor: Cybersecurity & IoT Embedded Systems Research Suite.",
+        3: "3rd Floor: Computing Technologies (CTECH) Annex Staff Cabins (TP2-301 to 325).",
+        4: "4th Floor: Computational Intelligence (CINTEL) Project Demonstration Labs.",
+        5: "5th Floor: AI & Big Data Centre of Excellence with Smart Classrooms."
       }
     },
     "bldg-main": {

@@ -42,6 +42,8 @@ const elements = {
   pillDirections: document.getElementById('pill-directions'),
   pillSurroundings: document.getElementById('pill-surroundings'),
   pillShuttles: document.getElementById('pill-shuttles'),
+  btnChooseMyLocation: document.getElementById('btn-choose-my-location'),
+  myLocationPillLabel: document.getElementById('my-location-pill-label'),
   btnOpenAddModal: document.getElementById('btn-open-add-modal'),
   btnCloudStatus: document.getElementById('btn-cloud-status'),
   cloudStatusDot: document.getElementById('cloud-status-dot'),
@@ -112,7 +114,16 @@ const elements = {
   layerShuttles: document.getElementById('layer-shuttles'),
   layerRoutes: document.getElementById('layer-routes'),
   layerMarkers: document.getElementById('layer-markers'),
+  layerUserLocation: document.getElementById('layer-user-location'),
   mapTooltip: document.getElementById('map-tooltip'),
+
+  // Location Picker Modal Elements
+  modalChooseLocation: document.getElementById('modal-choose-location'),
+  btnCloseLocModal: document.getElementById('btn-close-loc-modal'),
+  btnGpsDetect: document.getElementById('btn-gps-detect'),
+  locSearchInput: document.getElementById('loc-search-input'),
+  locQuickChips: document.getElementById('loc-quick-chips'),
+  locListContainer: document.getElementById('loc-list-container'),
 
   // Student Contribution Modal
   modalAdd: document.getElementById('modal-add-faculty-dest'),
@@ -156,7 +167,8 @@ function initApp() {
   setupMapControls();
   setupContributionModal();
   setupCloudSync();
-  updateUserLocationMarker();
+  setupLocationPicker();
+  renderUserLocationMarker();
 
   // Show default staff list
   switchMode('staff');
@@ -574,6 +586,10 @@ function showTeacherPlaceCard(teacher) {
             <i class="fa-solid fa-diamond-turn-right"></i>
             <span>Directions</span>
           </button>
+          <button class="btn-gmaps-secondary" id="btn-set-loc-teacher" title="Set here as where you are">
+            <i class="fa-solid fa-location-crosshairs"></i>
+            <span>I Am Here</span>
+          </button>
           <button class="btn-gmaps-secondary" id="btn-email-teacher" title="Send Email">
             <i class="fa-solid fa-envelope"></i>
           </button>
@@ -665,6 +681,13 @@ function showTeacherPlaceCard(teacher) {
     focusOnBuilding(teacher.buildingId);
   });
 
+  const btnSetLoc = document.getElementById('btn-set-loc-teacher');
+  if (btnSetLoc) {
+    btnSetLoc.addEventListener('click', () => {
+      setUserCurrentLocation(teacher.buildingId);
+    });
+  }
+
   document.getElementById('btn-email-teacher').addEventListener('click', () => {
     if (teacher.email) {
       window.location.href = `mailto:${teacher.email}?subject=Student Inquiry - SRM IST KTR`;
@@ -716,6 +739,8 @@ function setupDirections() {
 }
 
 function mapSelectionToNode(val) {
+  if (!val) return 'node-main-arch';
+  if (val === 'current-user-loc') return mapSelectionToNode(state.simulatedUserLocation);
   if (val.startsWith('node-')) return val;
   if (val.startsWith('stop-')) {
     const stop = SRM_KTR_DATA.shuttleSystem && SRM_KTR_DATA.shuttleSystem.stops.find(s => s.id === val);
@@ -724,6 +749,7 @@ function mapSelectionToNode(val) {
   if (val.startsWith('bldg-')) {
     const bldgMap = {
       'bldg-tp': 'node-tp-entrance',
+      'bldg-tp2': 'node-tp2-entrance',
       'bldg-main': 'node-main-bldg-entrance',
       'bldg-ub': 'node-ub-entrance',
       'bldg-tpg': 'node-tpg-front',
@@ -775,20 +801,14 @@ function mapSelectionToNode(val) {
 }
 
 function populateDirectionsDropdowns() {
-  // Start Locations (Outdoor Gates, transit, entrances)
-  const startOptions = SRM_KTR_DATA.navGraph.nodes.map(n => `
-    <option value="${n.id}">${n.name}</option>
-  `).join('');
-  elements.routeStartSelect.innerHTML = startOptions;
-  elements.routeStartSelect.value = state.routeStartId;
+  const currentLocName = getLocationNameById(state.simulatedUserLocation);
 
-  // Destination Options: Grouped by Teachers, Buildings, Surroundings, Shuttle Stops
-  const teacherGroup = SRM_KTR_DATA.teachers.map(t => `
-    <option value="teacher-${t.id}">👨‍🏫 ${t.name} (${t.roomNumber} - ${t.buildingName})</option>
+  const gatesGroup = SRM_KTR_DATA.navGraph.nodes.filter(n => n.type === 'gate' || n.type === 'transit').map(n => `
+    <option value="${n.id}">🚪 ${n.name}</option>
   `).join('');
 
   const buildingGroup = SRM_KTR_DATA.buildings.map(b => `
-    <option value="${b.id}">🏛️ ${b.name} (${b.code})</option>
+    <option value="${b.id}">🏢 ${b.name} (${b.code})</option>
   `).join('');
 
   const surroundGroup = SRM_KTR_DATA.surroundings.map(s => `
@@ -798,6 +818,42 @@ function populateDirectionsDropdowns() {
   const shuttleGroup = (SRM_KTR_DATA.shuttleSystem && SRM_KTR_DATA.shuttleSystem.stops) ? SRM_KTR_DATA.shuttleSystem.stops.map(st => `
     <option value="${st.id}">🚏 ${st.name} (${st.road})</option>
   `).join('') : '';
+
+  const otherNodesGroup = SRM_KTR_DATA.navGraph.nodes.filter(n => n.type !== 'gate' && n.type !== 'transit').map(n => `
+    <option value="${n.id}">🚶 ${n.name}</option>
+  `).join('');
+
+  elements.routeStartSelect.innerHTML = `
+    <optgroup label="📍 Where You Are (Current Location)">
+      <option value="current-user-loc">📍 My Location: ${currentLocName}</option>
+    </optgroup>
+    <optgroup label="🚪 Campus Gates & Transit">
+      ${gatesGroup}
+    </optgroup>
+    <optgroup label="🏢 Campus Buildings & High-Rises">
+      ${buildingGroup}
+    </optgroup>
+    <optgroup label="☕ Canteens, Food & Hangouts">
+      ${surroundGroup}
+    </optgroup>
+    <optgroup label="🚌 Shuttle & Bus Bays">
+      ${shuttleGroup}
+    </optgroup>
+    <optgroup label="🚶 Intersections & Quad Walkways">
+      ${otherNodesGroup}
+    </optgroup>
+  `;
+
+  if (!state.routeStartId || state.routeStartId === 'current-user-loc' || state.routeStartId === state.simulatedUserLocation) {
+    elements.routeStartSelect.value = 'current-user-loc';
+  } else {
+    elements.routeStartSelect.value = state.routeStartId;
+  }
+
+  // Destination Options: Grouped by Teachers, Buildings, Surroundings, Shuttle Stops
+  const teacherGroup = SRM_KTR_DATA.teachers.map(t => `
+    <option value="teacher-${t.id}">👨‍🏫 ${t.name} (${t.roomNumber} - ${t.buildingName})</option>
+  `).join('');
 
   elements.routeEndSelect.innerHTML = `
     <optgroup label="Faculty & Staff Cabins">
@@ -879,7 +935,8 @@ function findShortestSrmPath(startId, endId) {
 }
 
 function calculateAndDrawRoute() {
-  const startId = elements.routeStartSelect.value;
+  const rawStart = elements.routeStartSelect.value;
+  let startId = rawStart === 'current-user-loc' ? mapSelectionToNode(state.simulatedUserLocation) : mapSelectionToNode(rawStart);
   const rawEnd = elements.routeEndSelect.value;
   const isAccessible = elements.chkAccessibleMode.checked;
 
@@ -913,6 +970,7 @@ function calculateAndDrawRoute() {
   // Map building to outdoor node
   const bldgNodeMap = {
     'bldg-tp': 'node-tp-entrance',
+    'bldg-tp2': 'node-tp2-entrance',
     'bldg-main': 'node-main-bldg-entrance',
     'bldg-ub': 'node-ub-entrance',
     'bldg-tpg': 'node-tpg-front',
@@ -1176,9 +1234,14 @@ function renderSurroundingsList() {
       <div class="surround-desc">${s.desc}</div>
       <div class="surround-footer">
         <div><i class="${s.icon}"></i> ${s.hours}</div>
-        <button class="btn-gmaps-primary btn-nav-surround" data-surround-id="${s.id}" style="padding: 4px 12px; font-size: 0.72rem;">
-          Directions
-        </button>
+        <div style="display: flex; gap: 6px;">
+          <button class="btn-gmaps-secondary btn-set-here-surround" data-surround-id="${s.id}" style="padding: 4px 8px; font-size: 0.72rem;" title="Set as Where I Am">
+            <i class="fa-solid fa-location-crosshairs"></i>
+          </button>
+          <button class="btn-gmaps-primary btn-nav-surround" data-surround-id="${s.id}" style="padding: 4px 12px; font-size: 0.72rem;">
+            Directions
+          </button>
+        </div>
       </div>
     </div>
   `).join('');
@@ -1191,6 +1254,14 @@ function renderSurroundingsList() {
       if (item) {
         showSurroundDetail(item);
       }
+    });
+  });
+
+  elements.surroundingsListContainer.querySelectorAll('.btn-set-here-surround').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const sid = btn.getAttribute('data-surround-id');
+      setUserCurrentLocation(sid);
     });
   });
 
@@ -2254,12 +2325,12 @@ function setupMapControls() {
   });
 
   elements.ctrlMyLocation.addEventListener('click', () => {
-    const node = SRM_KTR_DATA.navGraph.nodes.find(n => n.id === state.simulatedUserLocation);
-    if (node) {
-      state.mapTransform = { x: (500 - node.x) * 1.4, y: (350 - node.y) * 1.4, scale: 1.4 };
-      applyTransform();
-      showToast("Centered on Main Arch Gate (Your Location)");
-    }
+    const coords = getNodeCoordinates(state.simulatedUserLocation);
+    state.mapTransform = { x: (500 - coords.x) * 1.4, y: (350 - coords.y) * 1.4, scale: 1.4 };
+    applyTransform();
+    const locName = getLocationNameById(state.simulatedUserLocation);
+    showToast(`📍 Centered on ${locName} (Your Location)`);
+    renderUserLocationMarker();
   });
 
   // Drag Panning (Mouse)
@@ -2342,19 +2413,291 @@ function applyTransform() {
   elements.svgMap.style.transform = `translate(${state.mapTransform.x}px, ${state.mapTransform.y}px) scale(${state.mapTransform.scale})`;
 }
 
-function updateUserLocationMarker() {
-  const node = SRM_KTR_DATA.navGraph.nodes.find(n => n.id === state.simulatedUserLocation);
-  if (!node) return;
+function getLocationNameById(id) {
+  if (!id) return "Main Arch Gate";
+  if (id === 'current-user-loc') return getLocationNameById(state.simulatedUserLocation);
 
-  elements.layerMarkers.innerHTML = `
-    <!-- User Current Position Marker (Blue Google Maps dot with white ring) -->
-    <g transform="translate(${node.x}, ${node.y})" class="svg-pulsing-marker">
-      <circle cx="0" cy="0" r="16" fill="rgba(255, 255, 255, 0.2)" />
-      <circle cx="0" cy="0" r="9" fill="#000000" stroke="#ffffff" stroke-width="2" />
-      <circle cx="0" cy="0" r="4.5" fill="#ffffff" />
-      <text x="0" y="24" text-anchor="middle" fill="#ffffff" font-size="8.5" font-weight="700">YOU ARE HERE</text>
+  if (id.startsWith('node-')) {
+    const node = SRM_KTR_DATA.navGraph.nodes.find(n => n.id === id);
+    if (node) return node.name;
+  }
+  if (id.startsWith('bldg-')) {
+    const bldg = SRM_KTR_DATA.buildings.find(b => b.id === id);
+    if (bldg) return bldg.name;
+  }
+  if (id.startsWith('surr-')) {
+    const sid = id.replace(/^surr-+/, '');
+    const surr = SRM_KTR_DATA.surroundings.find(s => s.id === sid || s.id === `surr-${sid}` || s.id === id);
+    if (surr) return surr.name;
+  }
+  if (id.startsWith('stop-')) {
+    const stop = SRM_KTR_DATA.shuttleSystem && SRM_KTR_DATA.shuttleSystem.stops.find(s => s.id === id);
+    if (stop) return stop.name;
+  }
+  const fallback = SRM_KTR_DATA.navGraph.nodes.find(n => n.id === id);
+  return fallback ? fallback.name : "Campus Spot";
+}
+
+function getNodeCoordinates(targetId) {
+  const actualNodeId = mapSelectionToNode(targetId);
+  const node = SRM_KTR_DATA.navGraph.nodes.find(n => n.id === actualNodeId);
+  if (node) return { x: node.x, y: node.y };
+  // Check if building
+  const bldg = SRM_KTR_DATA.buildings.find(b => b.id === targetId);
+  if (bldg) return { x: bldg.x + bldg.width / 2, y: bldg.y + bldg.height / 2 };
+  // Check if surround
+  const sid = targetId.replace(/^surr-+/, '');
+  const surr = SRM_KTR_DATA.surroundings.find(s => s.id === sid || s.id === `surr-${sid}` || s.id === targetId);
+  if (surr && surr.x !== undefined) return { x: surr.x, y: surr.y };
+  return { x: 190, y: 420 };
+}
+
+function renderUserLocationMarker() {
+  if (!elements.layerUserLocation) return;
+  const coords = getNodeCoordinates(state.simulatedUserLocation);
+  const locName = getLocationNameById(state.simulatedUserLocation);
+
+  // Update Top Pill label
+  if (elements.myLocationPillLabel) {
+    let shortName = locName;
+    if (shortName.length > 20) {
+      shortName = shortName.substring(0, 18) + '...';
+    }
+    elements.myLocationPillLabel.textContent = `I am at: ${shortName}`;
+  }
+
+  // Draw Google Maps Blue GPS beacon with radar pulse ring
+  elements.layerUserLocation.innerHTML = `
+    <g id="svg-user-location-marker" transform="translate(${coords.x}, ${coords.y})">
+      <circle cx="0" cy="0" r="16" class="svg-gps-pulse" />
+      <circle cx="0" cy="0" r="7.5" fill="#3b82f6" stroke="#ffffff" stroke-width="2.5" />
+      <circle cx="0" cy="0" r="2.5" fill="#ffffff" />
+      <rect x="-38" y="14" width="76" height="15" rx="3" fill="#1e3a8a" stroke="#60a5fa" stroke-width="1" />
+      <text x="0" y="24.5" text-anchor="middle" fill="#ffffff" font-size="6.8" font-weight="800">YOU ARE HERE</text>
     </g>
   `;
+}
+
+function setUserCurrentLocation(locId, toastMsg = true) {
+  state.simulatedUserLocation = locId;
+  state.routeStartId = locId;
+
+  renderUserLocationMarker();
+  populateDirectionsDropdowns();
+
+  const locName = getLocationNameById(locId);
+  if (toastMsg) {
+    showToast(`📍 Location set to: ${locName}`);
+  }
+
+  // Smoothly center the map view on chosen location
+  const coords = getNodeCoordinates(locId);
+  state.mapTransform = {
+    x: (500 - coords.x) * 1.35,
+    y: (350 - coords.y) * 1.35,
+    scale: 1.35
+  };
+  applyTransform();
+
+  // If directions panel was showing a route, re-compute from new location!
+  if (elements.routeGuidanceContainer && elements.routeGuidanceContainer.style.display !== 'none') {
+    calculateAndDrawRoute();
+  }
+}
+
+function setupLocationPicker() {
+  if (!elements.btnChooseMyLocation || !elements.modalChooseLocation) return;
+
+  // Open modal
+  elements.btnChooseMyLocation.addEventListener('click', () => {
+    openLocationPickerModal();
+  });
+
+  // Close modal
+  if (elements.btnCloseLocModal) {
+    elements.btnCloseLocModal.addEventListener('click', () => {
+      elements.modalChooseLocation.style.display = 'none';
+    });
+  }
+
+  // Close when clicking outside dialog
+  elements.modalChooseLocation.addEventListener('click', (e) => {
+    if (e.target === elements.modalChooseLocation) {
+      elements.modalChooseLocation.style.display = 'none';
+    }
+  });
+
+  // Quick Chips
+  if (elements.locQuickChips) {
+    elements.locQuickChips.querySelectorAll('.loc-chip-btn').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const locId = chip.getAttribute('data-loc-id');
+        setUserCurrentLocation(locId);
+        elements.modalChooseLocation.style.display = 'none';
+      });
+    });
+  }
+
+  // Search input filter
+  if (elements.locSearchInput) {
+    elements.locSearchInput.addEventListener('input', (e) => {
+      renderLocationPickerList(e.target.value.toLowerCase().trim());
+    });
+  }
+
+  // GPS Device Detection Button
+  if (elements.btnGpsDetect) {
+    elements.btnGpsDetect.addEventListener('click', () => {
+      detectDeviceLocation();
+    });
+  }
+
+  // Initial population of list
+  renderLocationPickerList('');
+}
+
+function openLocationPickerModal() {
+  if (!elements.modalChooseLocation) return;
+  elements.modalChooseLocation.style.display = 'flex';
+  if (elements.locSearchInput) {
+    elements.locSearchInput.value = '';
+    elements.locSearchInput.focus();
+  }
+  renderLocationPickerList('');
+}
+
+function detectDeviceLocation() {
+  if (!('geolocation' in navigator)) {
+    showToast("Geolocation is not supported. Please select your spot manually.");
+    return;
+  }
+
+  const originalBtnHtml = elements.btnGpsDetect.innerHTML;
+  elements.btnGpsDetect.innerHTML = `
+    <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.2rem; color: #60a5fa;"></i>
+    <div style="text-align: left;">
+      <div style="font-weight: 700; font-size: 0.82rem;">Locating via Device GPS...</div>
+      <div style="font-size: 0.68rem; color: var(--mono-300);">Acquiring satellite & network coordinates</div>
+    </div>
+  `;
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      elements.btnGpsDetect.innerHTML = originalBtnHtml;
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      
+      const srmLat = 12.8230;
+      const srmLng = 80.0450;
+      const dLat = (lat - srmLat) * 111320;
+      const dLng = (lng - srmLng) * 111320 * Math.cos(srmLat * Math.PI / 180);
+      const distFromCampusMeters = Math.hypot(dLat, dLng);
+
+      if (distFromCampusMeters > 3000) {
+        showToast(`GPS acquired! Outside campus bounds (~${(distFromCampusMeters/1000).toFixed(1)} km). Starting at Main Arch Gate.`);
+        setUserCurrentLocation('node-main-arch', false);
+      } else {
+        showToast("📍 Snapped to nearest campus entry: Main Arch Gate");
+        setUserCurrentLocation('node-main-arch', true);
+      }
+      elements.modalChooseLocation.style.display = 'none';
+    },
+    (err) => {
+      elements.btnGpsDetect.innerHTML = originalBtnHtml;
+      let msg = "Could not access device GPS.";
+      if (err.code === 1) msg = "Location permission denied. Please choose your campus spot from the list.";
+      else if (err.code === 2) msg = "Position unavailable. Please select your spot below.";
+      showToast(msg);
+    },
+    { timeout: 8000, enableHighAccuracy: true }
+  );
+}
+
+function renderLocationPickerList(query) {
+  if (!elements.locListContainer) return;
+
+  const items = [];
+
+  SRM_KTR_DATA.navGraph.nodes.forEach(n => {
+    items.push({
+      id: n.id,
+      name: n.name,
+      cat: n.type === 'gate' ? 'Entrance Gate' : (n.type === 'transit' ? 'Transit Hub' : 'Campus Walkway'),
+      road: n.road || 'Campus Road',
+      icon: n.type === 'gate' ? 'fa-solid fa-archway' : (n.type === 'transit' ? 'fa-solid fa-train' : 'fa-solid fa-location-dot')
+    });
+  });
+
+  SRM_KTR_DATA.buildings.forEach(b => {
+    items.push({
+      id: b.id,
+      name: b.name,
+      cat: b.category,
+      road: b.road,
+      icon: 'fa-solid fa-building'
+    });
+  });
+
+  SRM_KTR_DATA.surroundings.forEach(s => {
+    items.push({
+      id: `surr-${s.id}`,
+      name: s.name,
+      cat: s.category,
+      road: s.road,
+      icon: s.icon || 'fa-solid fa-compass'
+    });
+  });
+
+  if (SRM_KTR_DATA.shuttleSystem && SRM_KTR_DATA.shuttleSystem.stops) {
+    SRM_KTR_DATA.shuttleSystem.stops.forEach(st => {
+      items.push({
+        id: st.id,
+        name: st.name,
+        cat: 'Shuttle Stop',
+        road: st.road,
+        icon: 'fa-solid fa-bus-simple'
+      });
+    });
+  }
+
+  const seen = new Set();
+  let filtered = items.filter(it => {
+    if (seen.has(it.name)) return false;
+    seen.add(it.name);
+    if (!query) return true;
+    return it.name.toLowerCase().includes(query) || it.cat.toLowerCase().includes(query) || it.road.toLowerCase().includes(query);
+  });
+
+  const activeId = state.simulatedUserLocation;
+
+  elements.locListContainer.innerHTML = filtered.map(it => {
+    const isCur = it.id === activeId || (it.id.startsWith('surr-') && it.id.replace(/^surr-+/, '') === activeId);
+    return `
+      <div class="loc-item-card ${isCur ? 'active' : ''}" data-loc-id="${it.id}">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <i class="${it.icon}" style="color: ${isCur ? '#60a5fa' : 'var(--mono-300)'}; font-size: 0.9rem; width: 18px; text-align: center;"></i>
+          <div>
+            <div class="loc-item-title">
+              <span>${it.name}</span>
+              ${isCur ? '<span style="font-size: 0.65rem; background: #2563eb; color: #fff; padding: 1px 6px; border-radius: 4px;">CURRENT</span>' : ''}
+            </div>
+            <div class="loc-item-desc">${it.cat} • ${it.road}</div>
+          </div>
+        </div>
+        <button class="btn-gmaps-secondary" style="font-size: 0.72rem; padding: 4px 10px;">
+          ${isCur ? 'Here' : 'Select'}
+        </button>
+      </div>
+    `;
+  }).join('');
+
+  elements.locListContainer.querySelectorAll('.loc-item-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const locId = card.getAttribute('data-loc-id');
+      setUserCurrentLocation(locId);
+      elements.modalChooseLocation.style.display = 'none';
+    });
+  });
 }
 
 function showTooltip(e, html) {
@@ -2756,3 +3099,54 @@ function updateCloudStatusUI(status, message) {
 
 // Kickoff
 window.addEventListener('DOMContentLoaded', initApp);
+
+// -----------------------------------------------------------------------------
+// PROGRESSIVE WEB APP (PWA) INSTALL & SERVICE WORKER ENGINE
+// -----------------------------------------------------------------------------
+let deferredInstallPrompt = null;
+
+function setupPWA() {
+  // 1. Register Service Worker for offline support & PWA installability
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').then((reg) => {
+        console.log('SRM Navigator Service Worker active:', reg.scope);
+      }).catch((err) => {
+        console.warn('Service Worker registration skipped:', err);
+      });
+    });
+  }
+
+  // 2. Listen for native browser PWA install event
+  const btnInstall = document.getElementById('btn-install-pwa');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent mini-infobar from appearing on mobile
+    e.preventDefault();
+    deferredInstallPrompt = e;
+
+    if (btnInstall) {
+      btnInstall.style.display = 'inline-flex';
+      btnInstall.addEventListener('click', async () => {
+        if (!deferredInstallPrompt) return;
+        deferredInstallPrompt.prompt();
+        const { outcome } = await deferredInstallPrompt.userChoice;
+        if (outcome === 'accepted') {
+          showToast('🎉 SRM Navigator installed as home screen app!');
+          btnInstall.style.display = 'none';
+        }
+        deferredInstallPrompt = null;
+      });
+    }
+  });
+
+  // Track if installed already
+  window.addEventListener('appinstalled', () => {
+    showToast('🚀 Installed to your device! Launch anytime from your apps.');
+    if (btnInstall) btnInstall.style.display = 'none';
+    deferredInstallPrompt = null;
+  });
+}
+
+setupPWA();
+
