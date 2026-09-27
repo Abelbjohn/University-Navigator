@@ -1986,5 +1986,263 @@ body {
   color: var(--mono-200);
 }
 
+/* ==========================================================================
+   MOBILE & TABLET RESPONSIVENESS (Screens <= 768px)
+   ========================================================================== */
+.sheet-mobile-handle {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* Prevent any horizontal or vertical viewport bouncing */
+  html, body {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .gmaps-container {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  /* Compact Floating Search Hub pinned to top */
+  .gmaps-floating-search-hub {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-width: calc(100vw - 16px);
+    gap: 6px;
+  }
+
+  .gmaps-search-card {
+    padding: 6px 10px;
+    height: 42px;
+    border-radius: var(--radius-sm);
+    gap: 8px;
+  }
+
+  .brand-pin-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+
+  .gmaps-search-input {
+    font-size: 0.82rem;
+  }
+
+  /* Smooth scrollable pills row without scrollbars */
+  .gmaps-category-pills-row {
+    padding: 2px 0 4px 0;
+    gap: 6px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .gmaps-category-pills-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cat-pill-btn {
+    padding: 6px 11px;
+    font-size: 0.72rem;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+
+  /* Mobile Bottom Sheet (Sliding Google Maps style drawer) */
+  .gmaps-flyout-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    width: 100%;
+    max-width: 100%;
+    height: 62vh;
+    max-height: 78vh;
+    border-radius: 20px 20px 0 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.85);
+    transform: translateY(0);
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 60;
+  }
+
+  .gmaps-flyout-sheet.hidden {
+    display: flex;
+    transform: translateY(100%);
+    pointer-events: none;
+  }
+
+  .sheet-mobile-handle {
+    display: block;
+    width: 44px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.35);
+    border-radius: 3px;
+    margin: 8px auto 2px auto;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background var(--transition-fast);
+  }
+
+  .sheet-mobile-handle:hover, .sheet-mobile-handle:active {
+    background: var(--mono-white);
+  }
+
+  .sheet-header-bar {
+    padding: 8px 14px;
+  }
+
+  .sheet-title {
+    font-size: 0.86rem;
+  }
+
+  /* Indoor Floor Selector: Vertical Dock on the right side */
+  .gmaps-floor-dock {
+    top: auto;
+    bottom: 180px;
+    right: 10px;
+    flex-direction: column;
+    padding: 4px;
+    border-radius: var(--radius-sm);
+    max-width: 38px;
+    max-height: 190px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    gap: 4px;
+    scrollbar-width: none;
+    box-shadow: var(--mono-shadow-lg);
+  }
+
+  .gmaps-floor-dock::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gmaps-floor-dock > span {
+    display: none; /* Hide label 'FLOOR:' on mobile to keep it ultra compact */
+  }
+
+  #floor-pills-container {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .floor-pill {
+    width: 28px;
+    height: 28px;
+    font-size: 0.68rem;
+    flex-shrink: 0;
+  }
+
+  /* Bottom-Right Controls (Zoom & Location) */
+  .gmaps-bottom-controls {
+    bottom: 16px;
+    right: 10px;
+    gap: 6px;
+    z-index: 55;
+  }
+
+  .gmaps-ctrl-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 0.88rem;
+  }
+
+  /* Staff list optimizations */
+  .staff-rooms-panel {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .teacher-item-card {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .teacher-thumb {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-sm);
+  }
+
+  .teacher-name {
+    font-size: 0.88rem;
+  }
+
+  .teacher-designation {
+    font-size: 0.74rem;
+  }
+
+  .teacher-loc-pill {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+  }
+
+  /* Directions panel optimizations */
+  .directions-planner-panel {
+    padding: 10px;
+  }
+
+  .route-input-line {
+    padding: 8px 10px;
+  }
+
+  .gmaps-select {
+    font-size: 0.8rem;
+  }
+
+  /* Shuttle panel optimizations */
+  .shuttle-panel {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .shuttle-hero-card {
+    padding: 12px;
+  }
+
+  .shuttle-countdown-digits {
+    font-size: 1.6rem;
+  }
+
+  /* Modals on mobile */
+  .modal-dialog, .cloud-sync-modal-card {
+    width: 100%;
+    max-width: 100%;
+    max-height: 88vh;
+    border-radius: 16px;
+    margin: 6px;
+  }
+
+  .modal-body {
+    padding: 12px 14px;
+  }
+
+  .form-row-2 {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .cloud-highlights-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+
 
 

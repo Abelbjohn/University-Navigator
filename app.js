@@ -160,6 +160,11 @@ function initApp() {
 
   // Show default staff list
   switchMode('staff');
+
+  // On mobile devices, start with the drawer collapsed so the campus map is immediately visible!
+  if (window.innerWidth <= 768) {
+    elements.sheet.classList.add('hidden');
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -212,11 +217,31 @@ function showToast(message) {
 // 1. OPTION PILLS & MODE SWITCHER
 // -----------------------------------------------------------------------------
 function setupOptionPills() {
-  elements.pillStaffRooms.addEventListener('click', () => switchMode('staff'));
-  elements.pillDirections.addEventListener('click', () => switchMode('directions'));
-  elements.pillSurroundings.addEventListener('click', () => switchMode('surroundings'));
+  elements.pillStaffRooms.addEventListener('click', () => {
+    switchMode('staff');
+    elements.sheet.classList.remove('hidden');
+  });
+  elements.pillDirections.addEventListener('click', () => {
+    switchMode('directions');
+    elements.sheet.classList.remove('hidden');
+  });
+  elements.pillSurroundings.addEventListener('click', () => {
+    switchMode('surroundings');
+    elements.sheet.classList.remove('hidden');
+  });
   if (elements.pillShuttles) {
-    elements.pillShuttles.addEventListener('click', () => switchMode('shuttles'));
+    elements.pillShuttles.addEventListener('click', () => {
+      switchMode('shuttles');
+      elements.sheet.classList.remove('hidden');
+    });
+  }
+
+  // Mobile Bottom Drawer Handle (tap to minimize / open)
+  const sheetMobileHandle = document.getElementById('sheet-mobile-handle');
+  if (sheetMobileHandle) {
+    sheetMobileHandle.addEventListener('click', () => {
+      elements.sheet.classList.toggle('hidden');
+    });
   }
 
   if (elements.btnOpenAddModal) {
@@ -2237,7 +2262,7 @@ function setupMapControls() {
     }
   });
 
-  // Drag Panning
+  // Drag Panning (Mouse)
   elements.svgMap.addEventListener('mousedown', (e) => {
     state.isDragging = true;
     state.dragStart = { x: e.clientX - state.mapTransform.x, y: e.clientY - state.mapTransform.y };
@@ -2254,7 +2279,57 @@ function setupMapControls() {
     state.isDragging = false;
   });
 
-  // Wheel Zooming
+  // Touch Drag Panning & Pinch-to-Zoom for Mobile Devices
+  let initialPinchDistance = null;
+  let initialScale = 1;
+
+  elements.svgMap.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+      state.isDragging = true;
+      state.dragStart = {
+        x: e.touches[0].clientX - state.mapTransform.x,
+        y: e.touches[0].clientY - state.mapTransform.y
+      };
+      initialPinchDistance = null;
+    } else if (e.touches.length === 2) {
+      state.isDragging = false;
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      initialPinchDistance = Math.hypot(dx, dy);
+      initialScale = state.mapTransform.scale;
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 1 && state.isDragging) {
+      state.mapTransform.x = e.touches[0].clientX - state.dragStart.x;
+      state.mapTransform.y = e.touches[0].clientY - state.dragStart.y;
+      applyTransform();
+    } else if (e.touches.length === 2 && initialPinchDistance) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const currentDist = Math.hypot(dx, dy);
+      const factor = currentDist / initialPinchDistance;
+      state.mapTransform.scale = Math.max(0.6, Math.min(4.0, initialScale * factor));
+      applyTransform();
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchend', (e) => {
+    if (e.touches.length === 0) {
+      state.isDragging = false;
+      initialPinchDistance = null;
+    } else if (e.touches.length === 1) {
+      state.isDragging = true;
+      state.dragStart = {
+        x: e.touches[0].clientX - state.mapTransform.x,
+        y: e.touches[0].clientY - state.mapTransform.y
+      };
+      initialPinchDistance = null;
+    }
+  });
+
+  // Wheel Zooming (Desktop)
   elements.svgMap.addEventListener('wheel', (e) => {
     e.preventDefault();
     const zoomFactor = e.deltaY < 0 ? 1.15 : 0.88;
