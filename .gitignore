@@ -1,0 +1,18 @@
+# Python & environment
+__pycache__/
+*.py[cod]
+*.pyc
+.venv/
+venv/
+
+# Large raw scraped assets / temporary dump files
+script_general.js
+srm_raw_osm.xml
+vt_en_lines.txt
+vt_script_sample.txt
+
+# Operating System & IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
