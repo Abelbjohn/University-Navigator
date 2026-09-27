@@ -25,7 +25,11 @@ Built for students, faculty, and visitors to locate teacher staff rooms, find th
 - **Google Maps Left Place Sheet**: Slides open on teacher or landmark selection, featuring high-resolution faculty portraits (or clean **"No Image"** badge when unavailable), verified badges, rating, office hours, and instant 1-click **Directions**.
 - **Floating Controls**: Bottom-right zoom buttons (`+` / `-`), reset north compass (`🧭`), and my location centering (`🎯`).
 - **Floor Switcher Dock**: Quick access to multi-story high-rise levels (Floors Ground through 15th Floor for Tech Park and University Building).
-- **Student Contribution System (`+ Add Faculty / Spot`)**: Allows students to add any missing faculty or custom campus destination with photo upload, room number, cabin notes, and office hours, saved in browser `localStorage`.
+- **Student Contribution System (`+ Add Faculty / Spot`)**: Allows students to add any missing faculty or custom campus destination with photo upload, room number, cabin notes, and office hours.
+- **🌐 Real-Time Cloud Synchronization (`Cloud Sync`)**:
+  - Powered by **Google Firebase Firestore** with zero-server client architecture.
+  - When Student A submits a new faculty member or room change, it broadcasts instantly across the internet to every other student's phone and laptop in real-time.
+  - Features real-time `onSnapshot` listeners, offline fallback caching, in-app Firebase credentials setup, and visual **Live Cloud** status badges on student-contributed cards.
 
 ---
 
@@ -64,11 +68,23 @@ Imported directly from the SRM Faculty Directory across 10 departments:
 
 ---
 
-## 🚀 How to Run the App
+## 🌐 Live Website & Deployment
 
-The web application is running live locally at:
-```
-http://localhost:8080/
+The application is deployed live on **GitHub Pages**:
+👉 **[https://abelbjohn.github.io/University-Navigator/](https://abelbjohn.github.io/University-Navigator/)**
+
+### Local Development:
+```bash
+python -m http.server 8080
+# Open http://localhost:8080/ in your browser
 ```
 
-Or open [`index.html`](file:///C:/Users/Abel%20Baby/.gemini/antigravity-ide/scratch/campus-staff-locator/index.html) directly in any browser.
+---
+
+## ☁️ How to Enable Cloud Synchronization Across All Students
+
+1. Go to [console.firebase.google.com](https://console.firebase.google.com/) and create a free project (e.g. `srm-navigator`).
+2. Click **Build > Firestore Database** > **Create database** (choose *Start in Test mode*).
+3. In **Project settings > General**, register a web app (`</>`) to get your `firebaseConfig` object.
+4. Click the **Cloud Sync** button in the web app navigation bar, paste your config, and click **Save & Connect Cloud**!
+   *(Or paste it directly into `firebase-config.js` and push to GitHub).*

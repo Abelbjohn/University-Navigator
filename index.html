@@ -68,6 +68,10 @@
           <i class="fa-solid fa-plus"></i>
           <span>Add Faculty / Spot</span>
         </button>
+        <button class="cat-pill-btn pill-cloud-btn" id="btn-cloud-status" title="Internet Cloud Sync Status">
+          <span class="cloud-status-dot dot-yellow" id="cloud-status-dot"></span>
+          <span id="cloud-status-text">Cloud Sync</span>
+        </button>
       </div>
 
       <!-- ====================================================================
@@ -505,6 +509,11 @@
               </div>
             </div>
 
+            <div class="cloud-submission-notice" id="fac-cloud-notice" style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--mono-300); margin-bottom: 12px; background: rgba(255, 255, 255, 0.04); padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--mono-border);">
+              <i class="fa-solid fa-cloud-arrow-up" style="color: #4ade80;"></i>
+              <span><strong>Live Campus Sync:</strong> When saved, this faculty member broadcasts to all other students' devices in real time via Cloud Sync.</span>
+            </div>
+
             <div class="modal-actions-bar">
               <button type="button" class="btn-gmaps-secondary" id="btn-cancel-modal">Cancel</button>
               <button type="submit" class="btn-gmaps-primary">
@@ -574,6 +583,106 @@
             </div>
           </form>
 
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         MODAL: CLOUD DATABASE & INTERNET SYNC SETTINGS
+         ==================================================================== -->
+    <div class="modal-backdrop" id="modal-cloud-sync" style="display: none;">
+      <div class="modal-card cloud-sync-modal-card">
+        <div class="modal-header">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="cloud-icon-badge">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+            </div>
+            <div>
+              <h3 class="modal-title">Live Cloud Synchronization</h3>
+              <p class="modal-subtitle">Sync faculty additions and room updates across all students in real time</p>
+            </div>
+          </div>
+          <button class="btn-modal-close" id="btn-close-cloud-modal" title="Close">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Active Status Banner -->
+          <div class="cloud-status-banner" id="cloud-status-banner">
+            <div class="cloud-banner-indicator">
+              <span class="cloud-status-dot dot-yellow" id="cloud-banner-dot"></span>
+              <strong id="cloud-banner-title">Local Browser Mode</strong>
+            </div>
+            <p id="cloud-banner-desc" style="font-size: 0.78rem; color: var(--mono-300); margin-top: 4px;">
+              Submissions are currently stored only on this device. Connect Firebase Firestore below to enable campus-wide live sync.
+            </p>
+          </div>
+
+          <!-- Feature Highlights -->
+          <div class="cloud-highlights-grid">
+            <div class="cloud-highlight-item">
+              <i class="fa-solid fa-bolt" style="color: #f59e0b;"></i>
+              <div>
+                <strong>Zero-Lag Instant Broadcast</strong>
+                <span>When any student adds a teacher, everyone's map updates in seconds without refreshing.</span>
+              </div>
+            </div>
+            <div class="cloud-highlight-item">
+              <i class="fa-solid fa-shield-halved" style="color: #10b981;"></i>
+              <div>
+                <strong>Free Google Firebase</strong>
+                <span>Uses Google's generous free tier (50,000 reads &amp; 20,000 writes/day free).</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Connect Instructions -->
+          <div class="cloud-instructions-box">
+            <div class="cloud-instructions-header">
+              <i class="fa-solid fa-circle-info"></i>
+              <span>How to Connect Your Cloud Database (Takes 2 minutes)</span>
+            </div>
+            <ol class="cloud-steps-list">
+              <li>Open <a href="https://console.firebase.google.com/" target="_blank" rel="noopener">console.firebase.google.com</a> and click <strong>Create a project</strong>.</li>
+              <li>Go to <strong>Build &gt; Firestore Database</strong> &gt; Click <strong>Create database</strong> (choose <em>Start in Test mode</em>).</li>
+              <li>Under <strong>Project settings &gt; General</strong>, scroll to <em>Your apps</em>, click the Web icon <code>&lt;/&gt;</code>, and copy your <code>firebaseConfig</code> object.</li>
+              <li>Paste the config snippet or JSON below and click <strong>Save &amp; Connect</strong>!</li>
+            </ol>
+          </div>
+
+          <!-- Config Input Form -->
+          <div class="form-group" style="margin-top: 14px;">
+            <label for="input-firebase-config" style="display: flex; justify-content: space-between;">
+              <span>Firebase Config JSON / Object:</span>
+              <span style="font-size: 0.7rem; color: var(--mono-400);">Saved safely in your browser / repo</span>
+            </label>
+            <textarea 
+              id="input-firebase-config" 
+              class="modal-textarea" 
+              rows="6" 
+              placeholder='{
+  "apiKey": "AIzaSy...",
+  "authDomain": "srm-navigator.firebaseapp.com",
+  "projectId": "srm-navigator",
+  "storageBucket": "srm-navigator.appspot.com",
+  "messagingSenderId": "123456789",
+  "appId": "1:123456789:web:abcdef"
+}'
+              style="font-family: monospace; font-size: 0.75rem;"
+            ></textarea>
+          </div>
+
+          <div class="modal-actions-bar" style="margin-top: 16px;">
+            <button type="button" class="btn-gmaps-secondary" id="btn-disconnect-cloud">
+              <i class="fa-solid fa-power-off"></i>
+              <span>Disconnect (Use Local)</span>
+            </button>
+            <button type="button" class="btn-gmaps-primary" id="btn-save-cloud-config">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+              <span>Save &amp; Connect Cloud</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

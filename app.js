@@ -2,6 +2,7 @@
 // Monochrome Google Maps Style Navigation & Faculty Directory
 // Features: Correct Campus Geometry, Staff Finder Roster, No-Image Fallback, Student Contribution System
 import { SRM_KTR_DATA } from './data.js';
+import { cloudSync } from './cloud-sync.js';
 
 // Application State
 const state = {
@@ -42,6 +43,9 @@ const elements = {
   pillSurroundings: document.getElementById('pill-surroundings'),
   pillShuttles: document.getElementById('pill-shuttles'),
   btnOpenAddModal: document.getElementById('btn-open-add-modal'),
+  btnCloudStatus: document.getElementById('btn-cloud-status'),
+  cloudStatusDot: document.getElementById('cloud-status-dot'),
+  cloudStatusText: document.getElementById('cloud-status-text'),
 
   // Header Add Buttons
   btnHeaderAddFaculty: document.getElementById('btn-header-add-faculty'),
@@ -124,6 +128,16 @@ const elements = {
   photoPreviewBox: document.getElementById('photo-preview-box'),
   photoPreviewImg: document.getElementById('photo-preview-img'),
 
+  // Cloud Sync Modal Elements
+  modalCloudSync: document.getElementById('modal-cloud-sync'),
+  btnCloseCloudModal: document.getElementById('btn-close-cloud-modal'),
+  cloudBannerDot: document.getElementById('cloud-banner-dot'),
+  cloudBannerTitle: document.getElementById('cloud-banner-title'),
+  cloudBannerDesc: document.getElementById('cloud-banner-desc'),
+  inputFirebaseConfig: document.getElementById('input-firebase-config'),
+  btnSaveCloudConfig: document.getElementById('btn-save-cloud-config'),
+  btnDisconnectCloud: document.getElementById('btn-disconnect-cloud'),
+
   // Toast
   toast: document.getElementById('gmaps-toast'),
   toastText: document.getElementById('toast-text')
@@ -141,6 +155,7 @@ function initApp() {
   setupFloorDock();
   setupMapControls();
   setupContributionModal();
+  setupCloudSync();
   updateUserLocationMarker();
 
   // Show default staff list
@@ -158,6 +173,17 @@ function loadCustomStorageData() {
       if (Array.isArray(parsed) && parsed.length > 0) {
         // Prepend custom teachers so they show up at the top
         SRM_KTR_DATA.teachers = [...parsed, ...SRM_KTR_DATA.teachers];
+      }
+    }
+
+    // Also load any cached cloud faculty from previous sessions
+    const cloudCached = localStorage.getItem('srm_ktr_cloud_cached_teachers');
+    if (cloudCached) {
+      const parsedCloud = JSON.parse(cloudCached);
+      if (Array.isArray(parsedCloud) && parsedCloud.length > 0) {
+        const existingIds = new Set(SRM_KTR_DATA.teachers.map(t => t.id));
+        const toAdd = parsedCloud.filter(t => !existingIds.has(t.id));
+        SRM_KTR_DATA.teachers = [...toAdd, ...SRM_KTR_DATA.teachers];
       }
     }
 
@@ -416,7 +442,10 @@ function renderTeachersList() {
             <span style="font-size: 0.68rem; color: var(--mono-300); font-weight: 600;">${statusText}</span>
           </div>
           <div class="teacher-designation">${t.title}</div>
-          <div class="teacher-dept-tag">${t.dept}</div>
+          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 2px;">
+            <div class="teacher-dept-tag">${t.dept}</div>
+            ${t.isCommunity ? `<span class="badge-community"><i class="fa-solid fa-cloud-arrow-up"></i> Live Cloud</span>` : ''}
+          </div>
           
           <div class="teacher-loc-pill">
             <i class="fa-solid fa-building"></i>
@@ -502,9 +531,13 @@ function showTeacherPlaceCard(teacher) {
           </div>
 
           <div class="place-badges-row">
-            <span class="verified-badge">
-              <i class="fa-solid fa-certificate"></i> Verified SRM Faculty
-            </span>
+            ${teacher.isCommunity ? `
+              <span class="badge-community"><i class="fa-solid fa-cloud-arrow-up"></i> Live Cloud Sync (Student Added)</span>
+            ` : `
+              <span class="verified-badge">
+                <i class="fa-solid fa-certificate"></i> Verified SRM Faculty
+              </span>
+            `}
             <span class="rating-badge">${teacher.rating || '4.8 ★'}</span>
             <span style="color: var(--mono-300); font-size: 0.75rem;">${statusLabel}</span>
           </div>
@@ -2380,9 +2413,10 @@ function setupContributionModal() {
     };
 
     // Prepend to faculty directory
+    newFaculty.isCommunity = true;
     SRM_KTR_DATA.teachers.unshift(newFaculty);
 
-    // Save to localStorage
+    // Save to localStorage as local backup
     try {
       const existingSaved = JSON.parse(localStorage.getItem('srm_ktr_custom_teachers') || '[]');
       existingSaved.unshift(newFaculty);
@@ -2397,7 +2431,15 @@ function setupContributionModal() {
     renderTeachersList();
 
     closeContributionModal();
-    showToast(`Added ${name} (${roomNumber}) to campus directory!`);
+
+    // Broadcast to Cloud Firestore in real time
+    cloudSync.addFaculty(newFaculty).then(res => {
+      if (res.success) {
+        showToast(`🌐 Live Synced! ${name} is now visible to all students across campus.`);
+      } else {
+        showToast(`Saved locally! Connect Cloud Sync in top menu to broadcast to all students.`);
+      }
+    });
 
     // Switch to staff view and open the newly added faculty card
     switchMode('staff');
@@ -2450,6 +2492,13 @@ function setupContributionModal() {
     closeContributionModal();
     showToast(`Added "${name}" destination! Calculating directions...`);
 
+    // Broadcast to cloud
+    cloudSync.addDestination(newDest).then(res => {
+      if (res.success) {
+        showToast(`🌐 Live Synced "${name}" to all students!`);
+      }
+    });
+
     // Switch to directions and calculate route to this spot
     switchMode('directions');
     elements.routeEndSelect.value = `surr-${newDest.id}`;
@@ -2473,6 +2522,161 @@ function openContributionModal(tab = 'faculty') {
 
 function closeContributionModal() {
   elements.modalAdd.style.display = 'none';
+}
+
+// -----------------------------------------------------------------------------
+// CLOUD SYNCHRONIZATION SETUP (Firebase Firestore)
+// -----------------------------------------------------------------------------
+function setupCloudSync() {
+  if (!elements.btnCloudStatus || !elements.modalCloudSync) return;
+
+  // Open modal on click
+  elements.btnCloudStatus.addEventListener('click', () => {
+    openCloudSyncModal();
+  });
+
+  if (elements.btnCloseCloudModal) {
+    elements.btnCloseCloudModal.addEventListener('click', () => {
+      elements.modalCloudSync.style.display = 'none';
+    });
+  }
+
+  // Pre-fill textarea if config exists
+  const activeCfg = cloudSync.getActiveConfig();
+  if (activeCfg && elements.inputFirebaseConfig) {
+    elements.inputFirebaseConfig.value = JSON.stringify(activeCfg, null, 2);
+  }
+
+  // Save config button
+  if (elements.btnSaveCloudConfig) {
+    elements.btnSaveCloudConfig.addEventListener('click', async () => {
+      const val = elements.inputFirebaseConfig.value.trim();
+      if (!val) {
+        showToast("Please paste your Firebase configuration first.");
+        return;
+      }
+
+      let parsed = null;
+      try {
+        parsed = JSON.parse(val);
+      } catch (err) {
+        try {
+          const cleaned = val.replace(/(const|let|var)\s+\w+\s*=\s*/, '').replace(/;$/, '');
+          parsed = Function(`"use strict"; return (${cleaned})`)();
+        } catch (e2) {
+          showToast("Invalid JSON or object format. Please check syntax.");
+          return;
+        }
+      }
+
+      if (!parsed || !parsed.projectId || !parsed.apiKey) {
+        showToast("Config must include at least 'projectId' and 'apiKey'.");
+        return;
+      }
+
+      elements.btnSaveCloudConfig.disabled = true;
+      elements.btnSaveCloudConfig.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting...';
+
+      const ok = await cloudSync.saveConfig(parsed);
+      elements.btnSaveCloudConfig.disabled = false;
+      elements.btnSaveCloudConfig.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Save & Connect Cloud';
+
+      if (ok) {
+        showToast("🎉 Firebase Connected! Real-time cloud sync active across all devices.");
+        elements.modalCloudSync.style.display = 'none';
+      } else {
+        showToast("Could not connect to Firebase. Check API keys and network.");
+      }
+    });
+  }
+
+  // Disconnect button
+  if (elements.btnDisconnectCloud) {
+    elements.btnDisconnectCloud.addEventListener('click', () => {
+      cloudSync.disconnect();
+      if (elements.inputFirebaseConfig) elements.inputFirebaseConfig.value = '';
+      showToast("Disconnected. Running in local browser mode.");
+    });
+  }
+
+  // Listen for Cloud Status changes
+  cloudSync.onStatusChange((status, message) => {
+    updateCloudStatusUI(status, message);
+  });
+
+  // Listen for Real-Time Faculty Updates from Cloud
+  cloudSync.onFacultyUpdate((communityFaculty, isInitialLoad, newArrival) => {
+    if (!communityFaculty || communityFaculty.length === 0) return;
+
+    // Merge community faculty into SRM_KTR_DATA.teachers (community on top, non-community preserved)
+    const nonCommunity = SRM_KTR_DATA.teachers.filter(t => !t.isCommunity);
+    SRM_KTR_DATA.teachers = [...communityFaculty, ...nonCommunity];
+
+    populateDirectionsDropdowns();
+    renderMonochromeMap();
+    renderTeachersList();
+
+    if (newArrival && !isInitialLoad) {
+      showToast(`⚡ New faculty added by classmate: Dr. ${newArrival.name} (${newArrival.roomNumber || 'Room'})`);
+    }
+  });
+
+  // Listen for Real-Time Destination Updates
+  cloudSync.onDestinationUpdate((communityDests) => {
+    if (!communityDests || communityDests.length === 0) return;
+
+    const nonCommunity = SRM_KTR_DATA.surroundings.filter(d => !d.isCommunity);
+    SRM_KTR_DATA.surroundings = [...communityDests, ...nonCommunity];
+
+    populateDirectionsDropdowns();
+    renderSurroundingsList();
+  });
+
+  // Kickoff cloud initialization
+  cloudSync.init();
+}
+
+function openCloudSyncModal() {
+  if (!elements.modalCloudSync) return;
+  elements.modalCloudSync.style.display = 'flex';
+  const activeCfg = cloudSync.getActiveConfig();
+  if (activeCfg && elements.inputFirebaseConfig && !elements.inputFirebaseConfig.value) {
+    elements.inputFirebaseConfig.value = JSON.stringify(activeCfg, null, 2);
+  }
+}
+
+function updateCloudStatusUI(status, message) {
+  if (!elements.cloudStatusDot || !elements.cloudStatusText) return;
+
+  elements.cloudStatusDot.className = 'cloud-status-dot';
+  if (elements.cloudBannerDot) elements.cloudBannerDot.className = 'cloud-status-dot';
+
+  if (status === 'connected') {
+    elements.cloudStatusDot.classList.add('dot-green');
+    elements.cloudStatusText.textContent = 'Live Sync (Active)';
+    if (elements.cloudBannerDot) elements.cloudBannerDot.classList.add('dot-green');
+    if (elements.cloudBannerTitle) elements.cloudBannerTitle.textContent = 'Connected (Real-Time Cloud)';
+    if (elements.cloudBannerDesc) elements.cloudBannerDesc.textContent = message || 'All faculty additions sync live across all student devices!';
+  } else if (status === 'connecting') {
+    elements.cloudStatusDot.classList.add('dot-yellow');
+    elements.cloudStatusText.textContent = 'Connecting...';
+    if (elements.cloudBannerDot) elements.cloudBannerDot.classList.add('dot-yellow');
+    if (elements.cloudBannerTitle) elements.cloudBannerTitle.textContent = 'Connecting to Firebase...';
+    if (elements.cloudBannerDesc) elements.cloudBannerDesc.textContent = 'Contacting cloud database...';
+  } else if (status === 'error') {
+    elements.cloudStatusDot.classList.add('dot-red');
+    elements.cloudStatusText.textContent = 'Cloud Error';
+    if (elements.cloudBannerDot) elements.cloudBannerDot.classList.add('dot-red');
+    if (elements.cloudBannerTitle) elements.cloudBannerTitle.textContent = 'Connection Issue';
+    if (elements.cloudBannerDesc) elements.cloudBannerDesc.textContent = message || 'Check Firebase credentials or rules.';
+  } else {
+    // needs-config / local
+    elements.cloudStatusDot.classList.add('dot-yellow');
+    elements.cloudStatusText.textContent = 'Cloud Sync';
+    if (elements.cloudBannerDot) elements.cloudBannerDot.classList.add('dot-yellow');
+    if (elements.cloudBannerTitle) elements.cloudBannerTitle.textContent = 'Local Browser Mode';
+    if (elements.cloudBannerDesc) elements.cloudBannerDesc.textContent = 'Submissions currently stay on this device. Connect Firebase below for instant campus sync.';
+  }
 }
 
 // Kickoff
